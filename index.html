@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 授课分析 · 解决方案</title>
+<style>
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-card: #1a1a1a;
+    --bg-card-hover: #0d1f0d;
+    --accent: #AAFF00;
+    --accent-dark: #003300;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --error: #FF4444;
+    --success: #AAFF00;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+}
+.dot-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(circle, rgba(170,255,0,0.08) 1px, transparent 1px);
+    background-size: 8px 8px;
+}
+.logo-fixed {
+    position: fixed; top: 28px; right: 60px; z-index: 100;
+    font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);
+    opacity: 0.9; letter-spacing: 0.5px;
+}
+.nav-dots {
+    position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+    z-index: 100; display: flex; flex-direction: column; gap: 10px;
+}
+.nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(170,255,0,0.25); border: none; cursor: pointer;
+    transition: all 0.3s; padding: 0;
+}
+.nav-dot:hover, .nav-dot.active {
+    background: var(--accent); transform: scale(1.3);
+    box-shadow: 0 0 10px var(--accent);
+}
+.section {
+    position: relative; z-index: 1;
+    min-height: 100vh; padding: 80px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+}
+.section-header { margin-bottom: 40px; }
+.section-title {
+    font-size: 2.4rem; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 12px;
+}
+.section-subtitle { font-size: 1.1rem; color: var(--text-secondary); }
+.cover-section {
+    align-items: center; text-align: center; justify-content: center;
+}
+.cover-title {
+    font-size: 3.2rem; font-weight: 800; letter-spacing: 2px;
+    margin-bottom: 24px;
+}
+.cover-subtitle { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 48px; }
+.cover-footer { font-size: 0.85rem; color: var(--text-muted); margin-top: 80px; }
+.scroll-hint {
+    margin-top: 40px; color: var(--text-muted); font-size: 0.75rem;
+    animation: arrowPulse 2s infinite;
+}
+.accent { color: var(--accent); }
+.glow { animation: glowPulse 3s infinite; }
+.tag {
+    display: inline-block; background: var(--accent); color: #0a0a0a;
+    padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 0.85rem;
+}
+.card {
+    background: var(--bg-card); border-radius: 12px; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.3s;
+}
+.card:hover { background: var(--bg-card-hover); transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,0.38); }
+.card-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card-grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.pain-quote {
+    font-size: 1.8rem; font-weight: 700; text-align: center;
+    margin: 32px 0; line-height: 1.6;
+}
+.pain-card .role-tag { margin-bottom: 14px; }
+.pain-card ul { list-style: none; }
+.pain-card li {
+    padding: 6px 0 6px 16px; position: relative;
+    color: var(--text-secondary); font-size: 0.9rem;
+}
+.pain-card li::before {
+    content: '▸'; position: absolute; left: 0; color: var(--accent);
+}
+.flow-bridge {
+    text-align: center; margin-top: 40px; padding-top: 32px;
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(90deg, transparent, var(--accent), transparent) 1;
+    color: var(--text-secondary); font-size: 1.1rem; line-height: 1.8;
+}
+.flow-bridge .arrow-down {
+    display: block; margin-top: 12px; color: var(--accent);
+    animation: arrowPulse 2s infinite;
+}
+.product-dual {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 28px;
+    align-items: stretch;
+}
+.product-shot {
+    display: flex; flex-direction: column; text-align: center; height: 100%;
+}
+.product-shot .shot-img-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    min-height: 320px; max-height: 42vh; margin: 12px 0;
+    background: rgba(0,0,0,0.25); border-radius: 12px;
+    border: 1px solid #2a2a2a; overflow: hidden;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+}
+.product-shot img {
+    width: 100%; height: 100%; object-fit: contain;
+    display: block;
+}
+.product-shot .shot-label { margin-bottom: 8px; flex-shrink: 0; }
+.product-shot .shot-caption {
+    font-size: 0.9rem; color: var(--text-secondary);
+    min-height: 2.8em; display: flex; align-items: flex-start; justify-content: center;
+    flex-shrink: 0; margin-top: auto; padding-top: 4px;
+}
+.product-shots-stack {
+    position: relative; flex: 1; min-height: 320px; max-height: 42vh;
+    margin: 12px 0; width: 100%;
+}
+.product-shots-stack .product-shot-item {
+    position: absolute; width: 92%; border-radius: 12px;
+    border: 1px solid #2a2a2a; box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+    cursor: pointer; overflow: hidden; background: #111;
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s, z-index 0s;
+}
+.product-shots-stack .product-shot-item img {
+    width: 100%; height: auto; display: block; object-fit: contain;
+}
+.product-shots-stack .product-shot-item:first-child { top: 0; left: 0; z-index: 1; transform: rotate(-1.5deg); }
+.product-shots-stack .product-shot-item:last-child { bottom: 0; right: 0; z-index: 2; transform: rotate(1.5deg); }
+.product-shots-stack .product-shot-item.active {
+    z-index: 10; border-color: var(--accent);
+    transform: rotate(0deg) scale(1.02);
+    box-shadow: 0 22px 48px rgba(170,255,0,0.15);
+}
+.product-shots-stack .shot-badge {
+    position: absolute; top: 8px; left: 8px; z-index: 2;
+    font-size: 0.68rem; padding: 3px 8px; border-radius: 4px;
+    background: rgba(0,0,0,0.7); color: var(--accent); font-weight: 700;
+}
+.chip-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.chip {
+    flex: 1; min-width: 200px; padding: 16px 20px;
+    background: var(--bg-card); border: 1px solid rgba(170,255,0,0.2);
+    border-radius: 12px; text-align: center;
+}
+.chip strong { display: block; color: var(--accent); margin-bottom: 6px; font-size: 0.95rem; }
+.chip span { font-size: 0.85rem; color: var(--text-secondary); }
+.report-layout {
+    display: grid; grid-template-columns: 58% 42%; gap: 28px;
+    align-items: stretch; height: 520px;
+}
+.report-frame {
+    background: var(--bg-card); border-radius: 12px;
+    border: 1px solid rgba(170,255,0,0.3);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+    overflow: hidden; height: 100%;
+    display: flex; flex-direction: column; min-height: 0;
+    transition: border-color 0.3s;
+}
+.report-frame:hover { border-color: rgba(170,255,0,0.55); }
+.report-frame-bar {
+    padding: 10px 16px; font-size: 0.75rem; color: var(--text-muted);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+}
+.report-frame-bar .scroll-hint-sm { color: var(--accent); font-size: 0.7rem; animation: arrowPulse 2s infinite; }
+.report-frame-body {
+    flex: 1; min-height: 0; overflow: auto; background: #f0f0f0;
+    scrollbar-width: thin; scrollbar-color: var(--accent) rgba(255,255,255,0.08);
+}
+.report-frame-body::-webkit-scrollbar { width: 6px; }
+.report-frame-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+.report-frame-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); }
+.report-frame-body img {
+    display: block; width: 100%; height: auto;
+}
+.guide-cards {
+    display: flex; flex-direction: column; gap: 12px; height: 100%;
+}
+.guide-card {
+    background: var(--bg-card); border-radius: 12px; padding: 16px 18px 16px 22px;
+    border-left: 3px solid var(--accent); position: relative;
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+}
+.guide-card h4 { color: var(--accent); font-size: 0.95rem; margin-bottom: 8px; }
+.guide-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+.data-pillar-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-bottom: 28px;
+}
+.data-pillar {
+    background: var(--bg-card); border-radius: 12px; padding: 18px 20px;
+    border-top: 2px solid var(--accent); text-align: center;
+}
+.data-pillar h4 {
+    color: var(--accent); font-size: 1.05rem; font-weight: 800;
+    margin-bottom: 8px; letter-spacing: 0.08em;
+}
+.data-pillar p {
+    font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin: 0;
+}
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 28px; }
+.compare-old {
+    border: 1px dashed rgba(136,136,136,0.5); border-radius: 12px; padding: 28px;
+    background: rgba(18,18,18,0.85); position: relative; opacity: 0.88;
+}
+.compare-old::before {
+    content: 'BEFORE'; position: absolute; top: -11px; left: 24px;
+    background: #333; color: var(--text-muted); font-size: 0.7rem; font-weight: 800;
+    padding: 2px 10px; border-radius: 4px; letter-spacing: 1px;
+}
+.compare-new {
+    border: 2px solid var(--accent); border-radius: 12px; padding: 28px;
+    box-shadow: 0 0 40px rgba(170,255,0,0.15), inset 0 0 60px rgba(170,255,0,0.03);
+    background: linear-gradient(145deg, rgba(13,31,13,0.5), rgba(26,26,26,0.95));
+    position: relative;
+}
+.compare-new::before {
+    content: 'AFTER'; position: absolute; top: -12px; left: 24px;
+    background: var(--accent); color: #0a0a0a; font-size: 0.7rem; font-weight: 800;
+    padding: 2px 10px; border-radius: 4px; letter-spacing: 1px;
+}
+.compare-old h4 { color: var(--text-muted); margin-bottom: 16px; font-size: 1rem; }
+.compare-new h4 { color: var(--accent); margin-bottom: 16px; font-size: 1.05rem; }
+.compare-old li, .compare-new li {
+    list-style: none; padding: 6px 0 6px 16px; position: relative;
+    color: var(--text-secondary); font-size: 0.9rem;
+}
+.compare-old li::before, .compare-new li::before {
+    content: '▸'; position: absolute; left: 0; color: var(--accent);
+}
+.steps { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.step {
+    flex: 1; min-width: 120px; text-align: center;
+}
+.step-num {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--accent); color: #0a0a0a;
+    font-weight: 800; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px;
+}
+.step p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+.step strong { display: block; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 4px; }
+.value-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.value-card { text-align: center; padding: 20px 16px; }
+.value-card h4 { color: var(--accent); font-size: 0.95rem; margin-bottom: 8px; }
+.value-card p { font-size: 0.85rem; color: var(--text-secondary); }
+.flywheel-wrap {
+    position: relative; width: 100%; max-width: 760px; height: 460px;
+    margin: 0 auto 28px;
+}
+.flywheel-svg { width: 100%; height: 100%; display: block; }
+.flywheel-node-html {
+    position: absolute; width: auto; min-width: 118px; max-width: 160px;
+    background: rgba(26,26,26,0.95); backdrop-filter: blur(8px);
+    border: 1px solid rgba(170,255,0,0.4); border-radius: 10px;
+    padding: 10px 14px; text-align: center;
+    transform: translate(-50%, -50%); z-index: 2;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.flywheel-node-html strong {
+    display: block; color: var(--accent); font-size: 0.78rem; margin-bottom: 3px;
+    white-space: nowrap;
+}
+.flywheel-node-html span {
+    display: block; font-size: 0.68rem; color: var(--text-secondary); line-height: 1.35;
+    white-space: nowrap;
+}
+.flywheel-node-html.highlight {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(170,255,0,0.25);
+}
+.quote-block {
+    font-size: 2rem; font-weight: 800; text-align: center;
+    line-height: 1.6; margin: 28px 0;
+}
+.agent-layout { display: grid; grid-template-columns: 45% 55%; gap: 28px; align-items: stretch; }
+.agent-shots {
+    position: relative; min-height: 380px; height: 100%;
+}
+.agent-shot-item {
+    position: absolute; width: 88%; border-radius: 12px;
+    border: 1px solid #2a2a2a; box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+    cursor: pointer; transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s;
+    overflow: hidden; background: #111;
+}
+.agent-shot-item img { width: 100%; display: block; }
+.agent-shot-item:first-child { top: 0; left: 0; z-index: 1; transform: rotate(-2deg); }
+.agent-shot-item:last-child { bottom: 0; right: 0; z-index: 2; transform: rotate(2deg); }
+.agent-shot-item.active { z-index: 10; border-color: var(--accent); transform: rotate(0deg) scale(1.02); box-shadow: 0 22px 48px rgba(170,255,0,0.15); }
+.agent-cap { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+.agent-cap .cap-card {
+    background: var(--bg-card); border-radius: 12px; padding: 20px 22px;
+    border-left: 3px solid var(--accent); flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+}
+.agent-cap .cap-num {
+    display: inline-block; font-size: 0.75rem; font-weight: 800;
+    color: #0a0a0a; background: var(--accent);
+    padding: 3px 10px; border-radius: 4px; margin-bottom: 10px; width: fit-content;
+}
+.agent-cap .cap-card h4 { color: var(--text-primary); font-size: 1rem; margin-bottom: 8px; }
+.agent-cap .cap-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+.value-flow {
+    display: flex; flex-direction: column; gap: 0; max-width: 880px; margin: 0 auto 28px;
+}
+.value-flow-item {
+    display: grid; grid-template-columns: 108px 1fr; gap: 20px;
+    align-items: center; padding: 18px 0;
+    border-bottom: 1px solid rgba(170,255,0,0.1);
+}
+.value-flow-item:first-child { border-top: 1px solid rgba(170,255,0,0.1); }
+.value-flow-label {
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; min-height: 72px;
+    font-size: 0.82rem; font-weight: 700; line-height: 1.45;
+    color: var(--accent); padding: 8px 6px;
+    border-right: 2px solid rgba(170,255,0,0.25);
+}
+.value-flow-item.up .value-flow-label {
+    color: #0a0a0a; background: var(--accent); border-radius: 8px;
+    border-right: none; margin-right: 4px;
+}
+.value-flow-points {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+}
+.value-flow-points span {
+    font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;
+    padding-left: 14px; position: relative;
+}
+.value-flow-points span::before {
+    content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 0.75rem; top: 2px;
+}
+.value-flow-bridge {
+    text-align: center; padding: 10px 0; color: var(--text-muted); font-size: 0.8rem;
+}
+.value-flow-bridge em { color: var(--accent); font-style: normal; font-weight: 700; }
+.eco-cta { text-align: center; margin-top: 8px; }
+.jump-row {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    margin-bottom: 36px;
+}
+.jump-item {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 18px; background: var(--bg-card); border-radius: 999px;
+    border: 1px solid rgba(170,255,0,0.15); white-space: nowrap;
+}
+.jump-before { color: var(--text-muted); font-size: 0.92rem; text-decoration: line-through; opacity: 0.75; }
+.jump-arrow { color: var(--accent); font-size: 1rem; animation: gradientSweep 2s infinite; }
+.jump-after { color: var(--text-primary); font-weight: 700; font-size: 0.92rem; }
+.jump-after .accent { font-weight: 800; }
+.vision-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    max-width: 900px; margin: 0 auto;
+}
+.vision-card {
+    background: linear-gradient(145deg, rgba(26,26,26,0.95), rgba(13,31,13,0.4));
+    border: 1px solid rgba(170,255,0,0.22); border-radius: 14px;
+    padding: 24px 22px; text-align: center;
+    transition: all 0.3s;
+}
+.vision-card:hover {
+    border-color: rgba(170,255,0,0.5);
+    box-shadow: 0 0 30px rgba(170,255,0,0.1);
+    transform: translateY(-3px);
+}
+.vision-card-icon {
+    font-size: 1.6rem; margin-bottom: 10px; color: var(--accent);
+    font-weight: 800; line-height: 1;
+}
+.vision-card h4 {
+    color: var(--accent); font-size: 1.05rem; font-weight: 700;
+    margin-bottom: 8px;
+}
+.vision-card p {
+    color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin: 0;
+}
+.closing-section { align-items: center; text-align: center; }
+.closing-title { font-size: 3.6rem; font-weight: 800; margin-bottom: 24px; }
+.closing-sub { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 40px; }
+.closing-divider {
+    width: 60%; height: 1px; margin: 0 auto 32px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.closing-footer { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.8; }
+.closing-copy { font-size: 0.75rem; color: var(--text-muted); margin-top: 40px; }
+
+/* ===== CASE STUDY (from 案例.html) ===== */
+.case-bg {
+    padding: 22px 24px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(13, 31, 13, 0.55));
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    margin-bottom: 18px;
+    line-height: 1.8;
+    border: 1px solid rgba(170, 255, 0, 0.18);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+}
+.case-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 18px;
+    align-items: stretch;
+    margin-top: 18px;
+}
+.case-left-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 0;
+}
+.case-column {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    flex-direction: column;
+}
+.case-column-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+}
+.case-list { list-style: none; margin: 0; padding: 0; }
+.case-list li {
+    padding: 9px 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.78;
+}
+.case-list li::before {
+    content: '•';
+    position: absolute;
+    left: 2px;
+    color: var(--accent);
+}
+.case-content-panel {
+    justify-content: flex-start;
+    flex: 0 1 auto;
+    min-height: 150px;
+    padding: 18px 20px;
+}
+.case-image-panel {
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 0;
+}
+.case-image-panel img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 58vh;
+    object-fit: contain;
+    align-self: stretch;
+    border-radius: 14px;
+    border: 1px solid #2b2b2b;
+    background: #111;
+    display: block;
+}
+.case-metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+    margin-top: 0;
+    padding-top: 0;
+}
+.case-metric { text-align: center; padding: 0 6px; background: transparent; }
+.case-metric-num {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent);
+    text-shadow: 0 0 18px rgba(170,255,0,0.12);
+    margin-bottom: 8px;
+}
+.case-metric-label {
+    font-size: 0.84rem;
+    color: rgba(235,235,235,0.78);
+    line-height: 1.55;
+}
+.case-metric-note {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: rgba(235,235,235,0.52);
+    line-height: 1.4;
+}
+.case-metric, .case-metric * { background: transparent !important; }
+#case1 .case-quote {
+    position: relative;
+    padding: 18px 18px 18px 42px;
+    border-left: 3px solid var(--accent);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.75;
+}
+#case1 .case-quote::before {
+    content: "\201C";
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    color: var(--accent);
+    font-family: Georgia, serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ===== SOUNDFIELD (from 声场.html) ===== */
+.sf-section-wrap { display: flex; flex-direction: column; gap: 24px; }
+.sf-mic-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.25fr;
+    gap: 20px;
+    align-items: stretch;
+}
+.sf-img-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 20px 18px 18px;
+    border: 1px solid rgba(170,255,0,0.1);
+    transition: all 0.3s;
+}
+.sf-img-card:hover {
+    border-color: rgba(170,255,0,0.28);
+    background: var(--bg-card-hover);
+}
+.sf-img-card img {
+    width: 100%;
+    max-height: 26vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+.sf-product-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+}
+.sf-text-card {
+    background: linear-gradient(135deg, rgba(26,26,26,0.96), rgba(18,28,18,0.78));
+    border: 1px solid rgba(170,255,0,0.16);
+    border-left: 3px solid var(--accent);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+}
+.sf-text-card h4 { color: var(--accent); font-size: 1.08rem; margin-bottom: 10px; }
+.sf-text-card h4 + p + h4 { margin-top: 18px; }
+.sf-text-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin: 0;
+}
+.sf-cta { text-align: center; margin-top: 36px; }
+.sf-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, rgba(170,255,0,0.14), rgba(170,255,0,0.04));
+    border: 1px solid rgba(170,255,0,0.45);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    box-shadow: 0 10px 26px rgba(170,255,0,0.12);
+    transition: all 0.28s ease;
+}
+.sf-cta-btn:hover {
+    background: linear-gradient(135deg, rgba(170,255,0,0.25), rgba(170,255,0,0.08));
+    border-color: rgba(170,255,0,0.75);
+    box-shadow: 0 16px 34px rgba(170,255,0,0.22);
+    transform: translateY(-2px);
+}
+.sf-cta-arrow { transition: transform 0.28s ease; }
+.sf-cta-btn:hover .sf-cta-arrow { transform: translateX(4px); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes arrowPulse {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(6px); opacity: 1; }
+}
+@keyframes glowPulse {
+    0%, 100% { text-shadow: 0 0 10px rgba(170,255,0,0.3); }
+    50% { text-shadow: 0 0 30px rgba(170,255,0,0.6); }
+}
+@keyframes glowBox {
+    0%, 100% { box-shadow: 0 0 20px rgba(170,255,0,0.08); }
+    50% { box-shadow: 0 0 40px rgba(170,255,0,0.18); }
+}
+@keyframes flywheelSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes gradientSweep {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; text-shadow: 0 0 12px var(--accent); }
+}
+.fade-in {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }
+.stagger-5 { transition-delay: 0.5s; }
+.stagger-6 { transition-delay: 0.6s; }
+
+@media (max-width: 1024px) {
+    .section { padding: 60px 28px; }
+    .card-grid-4, .compare-row, .product-dual, .report-layout, .agent-layout, .value-flow, .case-layout, .sf-mic-grid, .vision-grid, .data-pillar-row { grid-template-columns: 1fr; }
+    .report-layout { height: auto; }
+    .report-frame { height: 420px; }
+    .cover-title { font-size: 2.4rem; }
+    .closing-title { font-size: 2.4rem; }
+    .flywheel-wrap { height: auto; min-height: 520px; }
+    .nav-dots { display: none; }
+    .jump-item { white-space: normal; }
+    .value-flow-item { grid-template-columns: 1fr; gap: 10px; }
+    .value-flow-label { min-height: auto; border-right: none; border-bottom: 2px solid rgba(170,255,0,0.25); padding-bottom: 10px; }
+    .value-flow-item.up .value-flow-label { margin-right: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="dot-grid" id="dotGrid"></div>
+<div class="logo-fixed">ClassIn · AI 授课分析</div>
+<nav class="nav-dots" id="navDots" aria-label="页面导航"></nav>
+
+<!-- P01 COVER -->
+<section class="section cover-section" id="p01" data-title="封面">
+    <h1 class="cover-title fade-in">让每一节课都<span class="accent glow">拿得出手</span></h1>
+    <p class="cover-subtitle fade-in stagger-1">AI 授课分析 · 把课堂黑箱变成机构资产</p>
+    <p class="cover-footer fade-in stagger-2">ClassIn · AI 授课分析解决方案 · 2026</p>
+    <p class="scroll-hint fade-in stagger-3">滚动开始 ↓</p>
+</section>
+
+<!-- P02 PAIN -->
+<section class="section" id="p02" data-title="痛点">
+    <div class="section-header fade-in">
+        <h2 class="section-title">课堂上完了，什么也没留下</h2>
+        <p class="section-subtitle">教培机构最贵的资产，每天都在流失</p>
+    </div>
+    <p class="pain-quote fade-in stagger-1">
+        教培机构最贵的资产是每天真实发生的<span class="accent glow">课堂</span>，<br>
+        但它们是一个巨大的<span class="accent glow">黑箱</span>——课上完了，什么也没留下。
+    </p>
+    <div class="card-grid-4 fade-in stagger-2">
+        <div class="card pain-card">
+            <span class="tag role-tag">一线教师</span>
+            <ul>
+                <li>收到的反馈笼统，难对应到具体环节</li>
+                <li>问题定位不到具体行为与时间点</li>
+                <li>评完缺少可执行的改进路径</li>
+            </ul>
+        </div>
+        <div class="card pain-card">
+            <span class="tag role-tag">教研管理者</span>
+            <ul>
+                <li>优质诊断集中在少数骨干</li>
+                <li>议课缺少客观锚点</li>
+                <li>教研结论难以沉淀为可复用资产</li>
+            </ul>
+        </div>
+        <div class="card pain-card">
+            <span class="tag role-tag">机构管理者</span>
+            <ul>
+                <li>缺少讨论好课的共同语言</li>
+                <li>各校区的优秀课堂难以形成合力</li>
+                <li>全量教学质量缺少可持续的管理抓手</li>
+            </ul>
+        </div>
+        <div class="card pain-card">
+            <span class="tag role-tag">教师使用阻力</span>
+            <ul>
+                <li>不愿完整回看自己的录课</li>
+                <li>担心新工具增加日常负担</li>
+                <li>抽样评课下，课堂表现易失真</li>
+            </ul>
+        </div>
+    </div>
+    <div class="flow-bridge fade-in stagger-3">
+        课堂需要被完整留痕、被结构化评价——<br>且这一过程不应额外占用教学时间。
+        <span class="arrow-down">↓</span>
+    </div>
+</section>
+
+<!-- P03 PRODUCT -->
+<section class="section" id="p03" data-title="产品入口">
+    <div class="section-header fade-in">
+        <h2 class="section-title">建课一键开启，课后自动出报告</h2>
+        <p class="section-subtitle">教师侧唯一动作：勾选开启</p>
+    </div>
+    <div class="product-dual fade-in stagger-1">
+        <div class="product-shot">
+            <span class="tag shot-label">① 建课开启</span>
+            <div class="shot-img-wrap">
+                <img src="AI授课分析前端开启入口.png" alt="建课开启授课分析入口" loading="lazy">
+            </div>
+            <p class="shot-caption">建课时勾选「开启授课分析」</p>
+        </div>
+        <div class="product-shot">
+            <span class="tag shot-label">② 课后查看</span>
+            <div class="product-shots-stack" id="productShots">
+                <div class="product-shot-item active" data-index="0">
+                    <span class="shot-badge">教师端</span>
+                    <img src="课后报告前端查看.png" alt="教师端课后报告查看" loading="lazy">
+                </div>
+                <div class="product-shot-item" data-index="1">
+                    <span class="shot-badge">机构后台</span>
+                    <img src="机构后台看到每节课的授课分析报告.png" alt="机构后台授课分析列表" loading="lazy">
+                </div>
+            </div>
+            <p class="shot-caption">课后自动生成，教师端 / 机构后台均可查看</p>
+        </div>
+    </div>
+    <div class="chip-row fade-in stagger-2">
+        <div class="chip"><strong>批量评课</strong><span>节节开启，课后自动出报告</span></div>
+        <div class="chip"><strong>预置智能体</strong><span>K12 人文 / K12 数理，开箱即用</span></div>
+        <div class="chip"><strong>自定义智能体</strong><span>按机构教研标准配置评价维度</span></div>
+    </div>
+</section>
+
+<!-- P04 REPORT -->
+<section class="section" id="p04" data-title="报告样张">
+    <div class="section-header fade-in">
+        <h2 class="section-title">授课分析报告</h2>
+        <p class="section-subtitle">把每一节课落成数据</p>
+    </div>
+    <div class="data-pillar-row fade-in stagger-1">
+        <div class="data-pillar">
+            <h4>可见</h4>
+            <p>课堂黑箱打开，教学过程、时间结构、互动节奏全程留痕，课上完了也能复盘</p>
+        </div>
+        <div class="data-pillar">
+            <h4>可量化</h4>
+            <p>五维评分、行为占比、思维层级分布——从「感觉不错」落到具体数字</p>
+        </div>
+        <div class="data-pillar">
+            <h4>可对标</h4>
+            <p>对照机构标准，每节课都标注与合格线之间的距离，改进有方向</p>
+        </div>
+    </div>
+    <div class="report-layout">
+        <div class="report-frame fade-in stagger-1" id="reportFrame">
+            <div class="report-frame-bar">
+                <span>示例报告 · 可上下滑动浏览完整内容</span>
+                <span class="scroll-hint-sm">↕ 滑动</span>
+            </div>
+            <div class="report-frame-body">
+                <img src="AI授课分析报告示例-莆田文教.jpeg" alt="AI授课分析报告示例" loading="lazy">
+            </div>
+        </div>
+        <div class="guide-cards fade-in stagger-2">
+            <div class="guide-card">
+                <h4>总评层</h4>
+                <p>综合评分、五维评分卡、能力雷达图——这节课整体水平与短板维度，一目了然。</p>
+            </div>
+            <div class="guide-card">
+                <h4>发现层</h4>
+                <p>关键发现、时序图、思维层级——把教学行为拆到具体环节与占比，支撑数据讨论。</p>
+            </div>
+            <div class="guide-card">
+                <h4>行动层</h4>
+                <p>教师成长处方直接对应下节课调整；对照同一标准，前后两次报告可验证改进是否落地。</p>
+            </div>
+            <div class="guide-card">
+                <h4>细项层</h4>
+                <p>语言表达、反馈类型、学生学习证据等——下钻到分钟级与行为级，供教研深度研讨。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- P05 SCENARIO 1 -->
+<section class="section" id="p05" data-title="新师磨课">
+    <div class="section-header fade-in">
+        <h2 class="section-title">新师磨课：按机构标准，自主迭代</h2>
+        <p class="section-subtitle">高频反馈替代低频人工听评课</p>
+    </div>
+    <div class="compare-row fade-in stagger-1">
+        <div class="compare-old">
+            <h4>师傅带教 / 教研听课点评</h4>
+            <ul>
+                <li>反馈频次受人力约束，难以覆盖每节课</li>
+                <li>单次听课只能覆盖一节课</li>
+                <li>反馈质量因指导者经验而波动</li>
+                <li>教研骨干大量时间用于基础带教</li>
+            </ul>
+        </div>
+        <div class="compare-new">
+            <h4>新师磨课路径</h4>
+            <div class="steps">
+                <div class="step"><div class="step-num">1</div><strong>定标准</strong><p>机构配置评价标准</p></div>
+                <div class="step"><div class="step-num">2</div><strong>拿报告</strong><p>每节课课后自动获得诊断</p></div>
+                <div class="step"><div class="step-num">3</div><strong>自迭代</strong><p>按关键发现与成长处方调整</p></div>
+                <div class="step"><div class="step-num">4</div><strong>人把关</strong><p>人工在关键节点终审</p></div>
+            </div>
+        </div>
+    </div>
+    <div class="value-row fade-in stagger-2">
+        <div class="card value-card"><h4>反馈伴随每节课</h4><p>磨课节奏由新师自己掌控，不必等待排课听课</p></div>
+        <div class="card value-card"><h4>标准前置一致</h4><p>从第一节课起即按同一套机构标准评价</p></div>
+        <div class="card value-card"><h4>人工聚焦终审</h4><p>骨干精力从基础带教转向关键把关</p></div>
+    </div>
+</section>
+
+<!-- P06 SCENARIO 2 -->
+<section class="section" id="p06" data-title="标准化教学">
+    <div class="section-header fade-in">
+        <h2 class="section-title">标准化教学：让好课可复制</h2>
+        <p class="section-subtitle">规模扩张的前提，是教学质量的一致性</p>
+    </div>
+    <div class="flywheel-wrap fade-in stagger-1" id="flywheelWrap">
+        <svg class="flywheel-svg" viewBox="0 0 760 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <path id="flyPath" d="M 380 60 A 170 170 0 1 1 379.99 60"/>
+                <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="#AAFF00"/>
+                </marker>
+                <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <circle cx="380" cy="230" r="170" stroke="rgba(170,255,0,0.12)" stroke-width="1" stroke-dasharray="5 5"/>
+            <path d="M 380 60 A 170 170 0 1 1 379.5 60" stroke="rgba(170,255,0,0.5)" stroke-width="2" fill="none" marker-end="url(#arrowHead)"/>
+            <circle r="7" fill="#AAFF00" filter="url(#glow)">
+                <animateMotion dur="14s" repeatCount="indefinite">
+                    <mpath href="#flyPath"/>
+                </animateMotion>
+            </circle>
+            <circle cx="380" cy="230" r="5" fill="#AAFF00" opacity="0.85"/>
+        </svg>
+    </div>
+    <div class="value-row fade-in stagger-2">
+        <div class="card value-card"><h4>标准可执行</h4><p>每份报告标注教师与机构标准之间的距离</p></div>
+        <div class="card value-card"><h4>经验可复制</h4><p>标杆课从个人经验提炼为机构实践模型</p></div>
+        <div class="card value-card"><h4>扩张可延续</h4><p>新校区、新班型、新教师纳入同一套标准体系</p></div>
+    </div>
+</section>
+
+<!-- P07 CUSTOM AGENT -->
+<section class="section" id="p07" data-title="自定义智能体">
+    <div class="section-header fade-in">
+        <h2 class="section-title">自定义智能体：专属于自己的评课标准</h2>
+    </div>
+    <p class="quote-block fade-in stagger-1">
+        从AI告诉我们什么是一堂好课，<br>
+        到我们告诉AI什么是一堂好课。
+    </p>
+    <div class="agent-layout fade-in stagger-2">
+        <div class="agent-shots" id="agentShots">
+            <div class="agent-shot-item active" data-index="0">
+                <img src="创建AI授课分析智能体入口.png" alt="创建智能体入口" loading="lazy">
+            </div>
+            <div class="agent-shot-item" data-index="1">
+                <img src="AI授课分析智能体自定义页面.png" alt="智能体自定义配置" loading="lazy">
+            </div>
+        </div>
+        <div class="agent-cap">
+            <div class="cap-card"><span class="cap-num">01</span><h4>开箱即用</h4><p>预置模板即可产出与示例报告同结构的完整诊断。</p></div>
+            <div class="cap-card"><span class="cap-num">02</span><h4>全维度可改写</h4><p>评价维度、指标命名、层级、术语、图表模块，均按机构教研语言配置。</p></div>
+            <div class="cap-card"><span class="cap-num">03</span><h4>行为级达标线</h4><p>可将「追问提升占比」「高阶提问占比」等抽象要求，写成可量化、可追踪的评价项。</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- P08 INSTITUTIONAL VALUE -->
+<section class="section" id="p08" data-title="机构价值">
+    <div class="section-header fade-in">
+        <h2 class="section-title">向下管教师，向上迭代标准</h2>
+        <p class="section-subtitle">全量报告支撑的两个机构级目标</p>
+    </div>
+    <div class="value-flow fade-in stagger-1">
+        <div class="value-flow-item down">
+            <div class="value-flow-label">向下<br>教学质量管理</div>
+            <div class="value-flow-points">
+                <span>从抽样监课到全量课堂留痕</span>
+                <span>每位教师是否稳定达标，有持续可追溯的依据</span>
+                <span>新师磨课、标准化教学的产出，汇总为管理视图</span>
+            </div>
+        </div>
+        <div class="value-flow-item up">
+            <div class="value-flow-label">向上<br>反哺教研</div>
+            <div class="value-flow-points">
+                <span>全量报告暴露教学共性不足</span>
+                <span>教研组据此迭代评价标准与教研内容</span>
+                <span>更新后的标准写回智能体，进入下一轮评课</span>
+            </div>
+        </div>
+    </div>
+    <div class="eco-cta fade-in stagger-2">
+        <a class="sf-cta-btn" href="https://alyssa9000.github.io/TeacherIn-ClassIn-AIQuality/" target="_blank" rel="noopener noreferrer">
+            <span>查看 TeacherIn × ClassIn LMS × AI教学质量管理 全链路方案</span>
+            <span class="sf-cta-arrow">→</span>
+        </a>
+    </div>
+</section>
+
+<!-- P09 BUSINESS VALUE -->
+<section class="section" id="p09" data-title="业务价值">
+    <div class="section-header fade-in">
+        <h2 class="section-title">当课堂被看见，增长拥有了新动力</h2>
+        <p class="section-subtitle">把教学质量，转化为续费、扩张与长期竞争壁垒</p>
+    </div>
+    <div class="jump-row fade-in stagger-1">
+        <div class="jump-item"><span class="jump-before">凭感觉</span><span class="jump-arrow">→</span><span class="jump-after"><span class="accent">有数据</span></span></div>
+        <div class="jump-item"><span class="jump-before">经验教学</span><span class="jump-arrow">→</span><span class="jump-after"><span class="accent">数据驱动</span></span></div>
+        <div class="jump-item"><span class="jump-before">独门绝技</span><span class="jump-arrow">→</span><span class="jump-after"><span class="accent">团队底色</span></span></div>
+    </div>
+    <div class="vision-grid fade-in stagger-2">
+        <div class="vision-card">
+            <div class="vision-card-icon">01</div>
+            <h4>每节课稳定合格</h4>
+            <p>续费与口碑有扎实地基，教学质量不再依赖个别名师发挥</p>
+        </div>
+        <div class="vision-card">
+            <div class="vision-card-icon">02</div>
+            <h4>新师批量培养</h4>
+            <p>扩张不受师资瓶颈牵制，实现合格教师快速供给</p>
+        </div>
+        <div class="vision-card">
+            <div class="vision-card-icon">03</div>
+            <h4>标杆课从一堂变成无数堂</h4>
+            <p>能量化的“好”，能复制的“好”</p>
+        </div>
+        <div class="vision-card">
+            <div class="vision-card-icon">04</div>
+            <h4>教学质量成竞争壁垒</h4>
+            <p>能稳定输出高质量课堂的机构才能长期跑赢市场</p>
+        </div>
+    </div>
+</section>
+
+<!-- P10 CASE STUDY (from 案例.html) -->
+<section class="section" id="case1" data-title="客户案例">
+    <div class="section-header fade-in">
+        <h2 class="section-title">标杆案例：华南某头部教培机构</h2>
+        <p class="section-subtitle">AI驱动的"备-教-评"全流程标准化升级</p>
+    </div>
+    <div class="case-bg fade-in">
+        华南地区某头部教培机构，在校学生超过20,000人，教师团队规模超过300人，多校区运营。<br>
+        机构秉持"一切以业务增长为导向，倒逼流程改革"的管理理念，深信规模化管理的核心在于建立可替代机制，而非依赖个人能力。
+    </div>
+    <div class="case-quote fade-in" style="margin-bottom:18px;">
+        坚持人才属于公司，不属于个人。把团队做大、建立可替代机制，管理才能真正落地。
+    </div>
+    <div class="case-layout">
+        <div class="case-left-column">
+            <div class="case-column case-content-panel fade-in stagger-1">
+                <div class="case-column-title">解决方案落地</div>
+                <ul class="case-list">
+                    <li>TeacherIn标准化备课：基于统一教案模板与资源库，教师可快速完成标准化备课，确保不同校区、不同教师的教学内容与质量保持一致</li>
+                    <li>全量课程自动录播：每堂课自动生成高清录播与AI课堂摘要，支持知识点索引与关键节点回放，帮助教师复盘教学细节，沉淀优质课例</li>
+                    <li>常态化AI授课分析：系统自动分析课堂互动数据、学生参与度与教学目标达成率，生成可视化报告，为教师提供个性化教学改进建议</li>
+                </ul>
+            </div>
+            <div class="case-metrics-row fade-in stagger-3">
+                <div class="case-metric">
+                    <div class="case-metric-num" data-target="3" data-suffix="个月">3个月</div>
+                    <div class="case-metric-label">新教师培养周期</div>
+                    <div class="case-metric-note">原1年缩短至3个月</div>
+                </div>
+                <div class="case-metric">
+                    <div class="case-metric-num" data-target="40" data-suffix="%↓">40%↓</div>
+                    <div class="case-metric-label">新教师磨课次数</div>
+                    <div class="case-metric-note">显著减少</div>
+                </div>
+                <div class="case-metric">
+                    <div class="case-metric-num" data-target="60" data-suffix="%↓">60%↓</div>
+                    <div class="case-metric-label">家长专业度投诉率</div>
+                    <div class="case-metric-note">明显降低</div>
+                </div>
+            </div>
+        </div>
+        <div class="case-column case-image-panel fade-in stagger-2">
+            <img loading="lazy" decoding="async" src="AI录课总结最新版.png" alt="授课分析截图">
+        </div>
+    </div>
+</section>
+
+<!-- P11 SOUNDFIELD (from 声场.html) -->
+<section class="section" id="soundfield" data-title="配套硬件">
+    <div class="section-header fade-in">
+        <h2 class="section-title">为好课护航：新声场让教室"听得清、说得明"</h2>
+        <p class="section-subtitle">专业级音频硬件组合，覆盖教学拾音与扩声全链路，语音采集清晰自然</p>
+    </div>
+    <div class="sf-section-wrap">
+        <div class="sf-mic-grid">
+            <div class="sf-img-card fade-in">
+                <img loading="lazy" decoding="async" src="声场-DT2PRO4.png" alt="DT2Pro4 指向性麦克风阵列">
+                <span class="sf-product-name">ClassIn Mic DT2 RPO 阵列麦克风</span>
+            </div>
+            <div class="sf-img-card fade-in stagger-1">
+                <img loading="lazy" decoding="async" src="声场- SPX1扬声器.jpg" alt="ClassIn Speaker SPX1 吸顶教学音箱">
+                <span class="sf-product-name">ClassIn Speaker SPX1 吸顶教学音箱</span>
+            </div>
+            <div class="sf-text-card fade-in stagger-2">
+                <h4>扩音更响更远</h4>
+                <p>通过算力升级和算法优化，实现扩声功率提升、覆盖范围拓展，保障教室每一处声音清晰洪亮、均匀无死角。</p>
+                <h4>全域均衡扩音</h4>
+                <p>通过波束成形技术精准定位发言人，逐级均衡拾音，实现发言人随心走动，前后排均可听到一致清晰的声音。</p>
+            </div>
+        </div>
+    </div>
+    <div class="sf-cta fade-in stagger-3">
+        <a class="sf-cta-btn" href="https://dt2-pro-solution-273244354052.us-west1.run.app/" target="_blank" rel="noopener noreferrer">
+            <span>查看声场完整解决方案</span>
+            <span class="sf-cta-arrow">→</span>
+        </a>
+    </div>
+</section>
+
+<!-- P12 CLOSING -->
+<section class="section closing-section" id="p12" data-title="封底">
+    <h2 class="closing-title fade-in">让每一节课都<span class="accent glow">拿得出手</span></h2>
+    <p class="closing-sub fade-in stagger-1">ClassIn · AI 授课分析</p>
+    <div class="closing-divider fade-in stagger-2"></div>
+    <p class="closing-footer fade-in stagger-3">建课一键开启 · 课后自动出报告</p>
+    <p class="closing-copy fade-in stagger-4">© 2026 ClassIn</p>
+</section>
+
+<script>
+(function() {
+    const sections = document.querySelectorAll('.section');
+    const nav = document.getElementById('navDots');
+
+    sections.forEach((sec, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-dot';
+        btn.setAttribute('aria-label', sec.dataset.title || ('第' + (i + 1) + '页'));
+        btn.addEventListener('click', () => sec.scrollIntoView({ behavior: 'smooth' }));
+        nav.appendChild(btn);
+    });
+    const dots = nav.querySelectorAll('.nav-dot');
+
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                const idx = [...sections].indexOf(e.target);
+                if (idx >= 0) {
+                    dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+                }
+                if (e.target.id === 'case1') animateMetrics(e.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
+    sections.forEach(s => io.observe(s));
+
+    window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        document.getElementById('dotGrid').style.transform = 'translateY(' + (y * 0.15) + 'px)';
+    });
+
+    // P03: 课后查看双图点击置顶
+    const productShots = document.getElementById('productShots');
+    if (productShots) {
+        productShots.querySelectorAll('.product-shot-item').forEach(item => {
+            item.addEventListener('click', () => {
+                productShots.querySelectorAll('.product-shot-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    }
+
+    // P07: 叠放截图点击置顶
+    const agentShots = document.getElementById('agentShots');
+    if (agentShots) {
+        agentShots.querySelectorAll('.agent-shot-item').forEach(item => {
+            item.addEventListener('click', () => {
+                agentShots.querySelectorAll('.agent-shot-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    }
+
+    // P06: 飞轮节点沿轨迹定位
+    const flywheelWrap = document.getElementById('flywheelWrap');
+    if (flywheelWrap) {
+        const nodes = [
+            { title: '批量评课', desc: '全量课堂出报告', highlight: true },
+            { title: '识别高分课', desc: '从报告库筛出标杆', highlight: false },
+            { title: '提炼实践模型', desc: '时序·提问·反馈', highlight: false },
+            { title: '写入自定义智能体', desc: '标准固化为评价规则', highlight: true },
+            { title: '每节课对标评价', desc: '标注与标准距离', highlight: false },
+            { title: '教师对标改进', desc: '沉淀新一批高分课', highlight: false }
+        ];
+        const cx = 380, cy = 230, r = 170, svgW = 760, svgH = 460;
+        nodes.forEach((n, i) => {
+            const deg = -90 + i * 60;
+            const rad = deg * Math.PI / 180;
+            const x = cx + r * Math.cos(rad);
+            const y = cy + r * Math.sin(rad);
+            const el = document.createElement('div');
+            el.className = 'flywheel-node-html' + (n.highlight ? ' highlight' : '');
+            el.style.left = (x / svgW * 100) + '%';
+            el.style.top = (y / svgH * 100) + '%';
+            el.innerHTML = '<strong>' + n.title + '</strong><span>' + n.desc + '</span>';
+            flywheelWrap.appendChild(el);
+        });
+    }
+
+    function animateMetrics(root) {
+        root.querySelectorAll('.case-metric-num[data-target]').forEach(el => {
+            if (el.dataset.animated) return;
+            el.dataset.animated = '1';
+            const target = parseInt(el.dataset.target, 10);
+            const suffix = el.dataset.suffix || '';
+            let cur = 0;
+            const step = Math.max(1, Math.floor(target / 30));
+            const timer = setInterval(() => {
+                cur += step;
+                if (cur >= target) { cur = target; clearInterval(timer); }
+                el.textContent = cur + suffix;
+            }, 30);
+        });
+    }
+
+    document.querySelectorAll('.draw-line').forEach(path => {
+        const len = path.getTotalLength ? path.getTotalLength() : 800;
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+        const obs = new IntersectionObserver(([e]) => {
+            if (e.isIntersecting) {
+                path.style.transition = 'stroke-dashoffset 1.2s ease';
+                path.style.strokeDashoffset = '0';
+                obs.disconnect();
+            }
+        }, { threshold: 0.3 });
+        obs.observe(path);
+    });
+})();
+</script>
+</body>
+</html>
